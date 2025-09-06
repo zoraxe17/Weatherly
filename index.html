@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weatherly - Advanced Weather App</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .app-container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 900px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .search-box {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .search-box input {
+      padding: 10px;
+      width: 60%;
+      border-radius: 10px 0 0 10px;
+      border: none;
+      outline: none;
+    }
+
+    .search-box button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 0 10px 10px 0;
+      background: #ff9800;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .current-weather {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .current-weather img {
+      width: 80px;
+    }
+
+    .forecast {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .day-card {
+      background: rgba(255,255,255,0.15);
+      padding: 15px;
+      border-radius: 15px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .day-card:hover {
+      transform: scale(1.05);
+    }
+
+    .day-card img {
+      width: 50px;
+    }
+
+    .extra-info {
+      font-size: 14px;
+      margin-top: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <h1>🌤 Weatherly</h1>
+
+    <div class="search-box">
+      <input type="text" id="cityInput" placeholder="Enter city name...">
+      <button onclick="getWeather()">Search</button>
+    </div>
+
+    <div id="currentWeather" class="current-weather"></div>
+    <h2>7-Day Forecast</h2>
+    <div id="forecast" class="forecast"></div>
+  </div>
+
+  <script>
+    const apiKey = "488597ef394a4386aeb145822250609";
+    
+    async function getWeather() {
+      const city = document.getElementById("cityInput").value || "London";
+      const currentDiv = document.getElementById("currentWeather");
+      const forecastDiv = document.getElementById("forecast");
+
+      currentDiv.innerHTML = "⏳ Fetching weather...";
+      forecastDiv.innerHTML = "";
+
+      try {
+        const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=7&aqi=yes&alerts=yes`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.error) {
+          currentDiv.innerHTML = `⚠️ ${data.error.message}`;
+          return;
+        }
+
+        // Current weather
+        const current = data.current;
+        currentDiv.innerHTML = `
+          <h2>${data.location.name}, ${data.location.country}</h2>
+          <img src="https:${current.condition.icon}" alt="${current.condition.text}">
+          <p><strong>${current.temp_c}°C</strong> | ${current.condition.text}</p>
+          <p>💧 Humidity: ${current.humidity}% | 🌬 Wind: ${current.wind_kph} kph</p>
+          <p>🌧 Precipitation: ${current.precip_mm} mm</p>
+        `;
+
+        // 7-day forecast
+        forecastDiv.innerHTML = data.forecast.forecastday.map(day => `
+          <div class="day-card">
+            <h3>${day.date}</h3>
+            <img src="https:${day.day.condition.icon}" alt="${day.day.condition.text}">
+            <p><strong>${day.day.avgtemp_c}°C</strong></p>
+            <p>${day.day.condition.text}</p>
+            <div class="extra-info">
+              🌡 Max: ${day.day.maxtemp_c}°C | Min: ${day.day.mintemp_c}°C <br>
+              💧 Humidity: ${day.day.avghumidity}% <br>
+              🌧 Rain: ${day.day.daily_chance_of_rain}% | ☁ Precip: ${day.day.totalprecip_mm} mm <br>
+              🌬 Wind: ${day.day.maxwind_kph} kph
+            </div>
+          </div>
+        `).join("");
+
+      } catch (error) {
+        currentDiv.innerHTML = "⚠️ Error fetching weather data.";
+      }
+    }
+
+    // Load default city (London) on page load
+    window.onload = getWeather;
+  </script>
+</body>
+</html>
